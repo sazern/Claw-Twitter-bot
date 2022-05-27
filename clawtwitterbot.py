@@ -85,7 +85,10 @@ def check_old():
     latesttx = json_logdata[0]
     newtxhash = latesttx["transaction_hash"]
     if newtxhash == txhash:
-        
+        del craft_log
+        del logdata
+        del json_logdata
+        gc.collect()
 
         time.sleep(60)
         check_old()
