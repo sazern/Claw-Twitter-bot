@@ -8,7 +8,9 @@ from iconsdk.providers.http_provider import HTTPProvider
 icon_service = IconService(HTTPProvider("https://ctz.solidwallet.io/api/v3"))
 claw_contract = "cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa"
 from datetime import datetime
-
+import sys, threading
+sys.setrecursionlimit(10**7) # max depth of recursion
+threading.stack_size(2**27)  # new thread will get stack of such size
 
 
 import tweepy
@@ -32,24 +34,38 @@ def getlog():
     txhash = latesttx["transaction_hash"]
     indexed = latesttx["indexed"]
     json_indexed = json.loads(indexed)
+    global operator
     operator = json_indexed[1]
     global seller
     seller = json_indexed[2]
     global reciever
     reciever = json_indexed[3]
+    global sale
+    
     
     if operator == "cx9c4698411c6d9a780f605685153431dcda04609f":
         sale = 1
+        
     else:
          sale = 0
     
     if sale == 1:
-        
+        now = datetime.now()
+
+        current_time = now.strftime("%H:%M:%S")
+
+
+        print(current_time + " ### NFT SOLD ###")
+        print("From: ", seller)
+        print("To: ", reciever)
+        print("TxHash: ", txhash)
+        print("Operator: " + operator)    
         
         gettxresult()
         
     else:
-        getlog()
+           print("Operator is not craft contract")
+           op_not_craft()
 
 
     
@@ -74,14 +90,35 @@ def gettxresult():
     tweet()
     
     
-
+def op_not_craft():
+    global operator
+    global sale
+    print(sale)
+    while operator != "cx9c4698411c6d9a780f605685153431dcda04609f":
+        d_craft_log = requests.get('https://tracker.icon.community/api/v1/logs?score_address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1')
+        d_logdata = d_craft_log.text
+        d_json_logdata = json.loads(d_logdata)
+        d_latesttx = d_json_logdata[0]          
+        d_indexed = d_latesttx["indexed"]
+        d_json_indexed = json.loads(d_indexed)
+        operator = d_json_indexed[1]
+        strsale = str(sale)
+        print("######################################")
+        print("Sale var: " + strsale)
+        print("Operator is not craft contract")
+        print("Operator: " + operator)
+        print("######################################")
+        time.sleep(10)
+    else:
+        sale = 1
+        getlog()
 
 def check_old():
-    
-    craft_log = requests.get('https://tracker.icon.community/api/v1/logs?score_address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1')
-    logdata = craft_log.text
     try:
-     json_logdata = json.loads(logdata)
+        craft_log = requests.get('https://tracker.icon.community/api/v1/logs?score_address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1')
+        logdata = craft_log.text
+    
+        json_logdata = json.loads(logdata)
     except json.decoder.JSONDecodeError:
         now = datetime.now()
 
@@ -92,15 +129,17 @@ def check_old():
     else:
         latesttx = json_logdata[0]
         newtxhash = latesttx["transaction_hash"]
-        if newtxhash == txhash:
-            del craft_log
-            del logdata
-            del json_logdata
-            gc.collect()
-            
-            time.sleep(10)
-            check_old()
+        while newtxhash == txhash:
+            print("Nothing New")
+            new_log = requests.get('https://tracker.icon.community/api/v1/logs?score_address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1')
+            newlogdata = new_log.text
+            json_newlogdata = json.loads(newlogdata)
+            newlatesttx = json_newlogdata[0]
+            newtxhash = newlatesttx["transaction_hash"]
+            print("last tx: " + newtxhash)
+            time.sleep(5)
         else:
+            print("New sale!")
             getlog()
 
 def tweet():
@@ -108,7 +147,7 @@ def tweet():
     text = "Claw: " + strtokenid + " was just sold for " + stramount + " ICX" + "\n" + url
     
     response = client.create_tweet(text=text)
-    print(response)
+    print("Tweet: " + f"https://twitter.com/clawnftsales/status/{response.data['id']}")
     
     check_old()
 
