@@ -212,7 +212,7 @@ def tweet():
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     stramount = str(amount)
-    text = "Claw: " + strtokenid + " was just sold for " + stramount + " ICX" + "\n" + "Rarity Rank: " + strrank + "\n" + url
+    text = "Claw: " + strtokenid + " was just sold for " + stramount + " $ICX" + "\n" + "Rarity Rank: " + strrank + "\n" + url
     try:
         response = client.create_tweet(text=text)
         print(current_time + "[bright_green] Tweet: [/bright_green]" + f"https://twitter.com/clawnftsales/status/{response.data['id']}")
