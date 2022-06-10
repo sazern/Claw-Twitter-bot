@@ -86,6 +86,16 @@ def gettxresult():
         tokenid = int(hextokenid, 16)
         global strtokenid
         strtokenid = str(tokenid)
+
+
+        rarity_url = "https://api.rarityhunter.network/v1/api/nft?contractAddress=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&tokenId=" + strtokenid
+        rarity_apiurl = rarity_url
+        rarity_api = requests.get(rarity_apiurl)
+        rarity_data = rarity_api.text
+        json_rarity = json.loads(rarity_data)
+        rarity_rank = json_rarity["data"]["rank"]
+        global strrank
+        strrank = str(rarity_rank)
         
         global url
         url = "https://craft.network/nft/cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa:" + strtokenid
@@ -105,9 +115,10 @@ def gettxresult():
         table2.add_column("Value:", style="dim")
         table2.add_column("TokenID:") 
         table2.add_column("URL:", justify="right")
+        table2.add_column("Rank:", justify="right")
         table2.add_column("Status:", justify="right")
         table2.add_row(
-        stramount, strtokenid, url, status
+        stramount, strtokenid, url, strrank, status
         ) 
         console.print(table2)
         #Lets send a tweet about it!
@@ -201,7 +212,7 @@ def tweet():
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     stramount = str(amount)
-    text = "Claw: " + strtokenid + " was just sold for " + stramount + " ICX" + "\n" + url
+    text = "Claw: " + strtokenid + " was just sold for " + stramount + " ICX" + "\n" + "Rarity Rank: " + strrank + "\n" + url
     try:
         response = client.create_tweet(text=text)
         print(current_time + "[bright_green] Tweet: [/bright_green]" + f"https://twitter.com/clawnftsales/status/{response.data['id']}")
@@ -215,4 +226,5 @@ def tweet():
 
 print("Starting Bot")
 getlog()
+
 
