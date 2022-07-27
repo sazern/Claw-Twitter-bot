@@ -22,7 +22,12 @@ EXA = 10**18
 
 #Gets the latest transaction to the Claw contract address with method "TransferSingle" from ICON API.
 def getlog():
-    craft_log = requests.get('https://tracker.icon.community/api/v1/logs?score_address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
+    try:
+        craft_log = requests.get('https://tracker.icon.community/api/v1/logs?address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
+         
+    except:
+        time.sleep(20)
+        getlog()
     logdata = craft_log.text
     json_logdata = json.loads(logdata)
     latesttx = json_logdata[0]
@@ -51,7 +56,7 @@ def getlog():
         
     else:
            
-           op_not_craft()
+        op_not_craft()
 
 
     
@@ -73,11 +78,15 @@ def gettxresult():
         global amount
         amount = exaamount / EXA
         stramount = str(amount)
-        hextokenid = result2["data"][0]
-        global tokenid
-        tokenid = int(hextokenid, 16)
-        global strtokenid
-        strtokenid = str(tokenid)
+        try:
+            hextokenid = result2["data"][0]
+            global tokenid
+            tokenid = int(hextokenid, 16)
+            global strtokenid
+            strtokenid = str(tokenid)
+        except:
+            time.sleep(20)
+            gettxresult()
 
         rarity_url = "https://api.rarityhunter.network/v1/api/nft?contractAddress=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&tokenId=" + strtokenid
         rarity_apiurl = rarity_url
@@ -101,7 +110,11 @@ def status_nosale():
     global status
     while status != "ICXTransfer(Address,Address,int)":
         
-        s_craft_log = requests.get('https://tracker.icon.community/api/v1/logs?score_address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
+        try:
+            s_craft_log = requests.get('https://tracker.icon.community/api/v1/logs?address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
+        except:
+            time.sleep(20)
+            status_nosale()
         s_logdata = s_craft_log.text
         s_json_logdata = json.loads(s_logdata)
         s_latesttx = s_json_logdata[0]
@@ -123,7 +136,11 @@ def op_not_craft():
     global operator
     global sale
     while operator != "cx9c4698411c6d9a780f605685153431dcda04609f":
-        d_craft_log = requests.get('https://tracker.icon.community/api/v1/logs?score_address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
+        try:
+            d_craft_log = requests.get('https://tracker.icon.community/api/v1/logs?address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
+        except:
+            time.sleep(20)
+            op_not_craft()
         d_logdata = d_craft_log.text
         d_json_logdata = json.loads(d_logdata)
         d_latesttx = d_json_logdata[0]          
@@ -141,35 +158,34 @@ def op_not_craft():
 
 # Checks the latest transaction for a new sale, If the last tx is the same, then it checks it again 
 def check_old():
+    
     try:
-        craft_log = requests.get('https://tracker.icon.community/api/v1/logs?score_address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
+        craft_log = requests.get('https://tracker.icon.community/api/v1/logs?address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
         logdata = craft_log.text
         json_logdata = json.loads(logdata)
-    except json.decoder.JSONDecodeError:
-        now = datetime.now()
-
-        current_time = now.strftime("%H:%M:%S")
-        print(current_time + " Error decoding JSON")
-        time.sleep(3)
+    except:
+        time.sleep(20)
         check_old()
-    else:
-        latesttx = json_logdata[0]
-        newtxhash = latesttx["transaction_hash"]
-        while newtxhash == txhash:
-            now = datetime.now()
-            current_time = now.strftime("%H:%M:%S")
-            
-            new_log = requests.get('https://tracker.icon.community/api/v1/logs?score_address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
-            newlogdata = new_log.text
-            json_newlogdata = json.loads(newlogdata)
-            newlatesttx = json_newlogdata[0]
-            newtxhash = newlatesttx["transaction_hash"]
-            
-            
-            
+    latesttx = json_logdata[0]
+    newtxhash = latesttx["transaction_hash"]
+    
+    while newtxhash == txhash:  
+                
+        try:
+            new_log = requests.get('https://tracker.icon.community/api/v1/logs?address=cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa&method=TransferSingle&limit=1', timeout=(10, 10))
+        except:
             time.sleep(20)
-        else:
-            getlog()
+            check_old()
+        newlogdata = new_log.text
+        json_newlogdata = json.loads(newlogdata)
+        newlatesttx = json_newlogdata[0]
+        newtxhash = newlatesttx["transaction_hash"]
+            
+            
+        
+        time.sleep(5)
+    else:
+        getlog()
 # Tweets the sale
 def tweet():
     now = datetime.now()
