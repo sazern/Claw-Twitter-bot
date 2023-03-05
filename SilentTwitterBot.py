@@ -72,7 +72,19 @@ def gettxresult():
     if status != "ICXTransfer(Address,Address,int)":
         status_nosale()
     else:
-        result2 = txresult["eventLogs"][4]
+        
+        result2 = txresult["eventLogs"][1]
+        royhexamount = result2["indexed"][3]
+        roydec = int(royhexamount, 16) / EXA
+        global roystramount
+        roystramount= str(roydec)
+
+        royadress = "hx5533bf0fdfcf7d90c703b7a4000e9c9dd3245066"
+        roybalance = icon_service.get_balance(royadress) / EXA
+        global strbalance
+        strbalance = str(roybalance)
+
+        result2 = txresult["eventLogs"][5]
         hexamount = result3["indexed"][3]
         exaamount = int(hexamount, 16)
         global amount
@@ -191,7 +203,8 @@ def tweet():
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     stramount = str(amount)
-    text = "Claw: " + strtokenid + " was just sold for " + stramount + " $ICX" + "\n" + "Rarity Rank: " + strrank + "\n" + url
+    text = "Claw: " + strtokenid + " was just sold for " + stramount + " $ICX" + " and " + roystramount + " $ICX" + " in royalties" + "\n" + "Rarity Rank: " + strrank + "\n" + "\n" + "Current balance of Claw Royalty wallet is: " + strbalance + " ICX" + "\n" + url
+
     try:
         response = client.create_tweet(text=text)
         print(current_time + " Tweet: " + f"https://twitter.com/clawnftsales/status/{response.data['id']}")
@@ -206,5 +219,4 @@ def tweet():
 
 print("Starting Bot")
 getlog()
-
 
